@@ -1,3 +1,3 @@
-# Spades
+# BS
 
-Recreation of the popular card game Spades
+Recreation of the BS Card Game

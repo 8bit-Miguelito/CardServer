@@ -1,38 +1,41 @@
-#include <iostream>
+#include<iostream>
+#include<set>
+
 using namespace std;
 
 #ifndef GAMEBOARD_H
 #define GAMEBOARD_H
 
-const int numSuits = 4;
-const int numTypes = 13;
-const int numPlayers = 4; 
-extern int numCards;
-
-class Card {
+class Player
+{
 	private:
-		int val;
-		string valType;
-		string suitType;
+		struct Card {
+			
+			int rank;
+			string suit;
+		
+			Card() {rank = 0; suit = "";}
+			Card(int rank, string suit) : rank(rank) , suit(suit) {}
+		};
+		
+		Card* hand;
+		size_t numCards;
+
 	public:
-		void createCard(int value, string type, string suit);
-		string getSuit() { return suitType; }
-		string getType() { return valType; }
+		Player()
+		{
+			hand = new Card[13];
+			numCards = 0;
+		}
+
+		void displayCards()
+		{
+			for(size_t i = 0; i < numCards; i++)
+			{
+				cout << hand[i].rank << " of " << hand[i].suit << endl;
+			}
+		}
 };
-
-class Player (
-	private:
-		int numCards;
-		Card hand[13];
-	public: 
-		void addCard(Card currCard);
-
-)
-
-void addCardToDeck(Card* deck, string suit, string type[]);
-void shuffleDeck(Card* deck);
-void swapIndex(Card* deck, int swapped, int swapTo);
-void dealCards(Card* deck);
 
 
 #endif
