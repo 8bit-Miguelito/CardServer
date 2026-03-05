@@ -1,6 +1,12 @@
 #include<iostream>
 #include<sys/socket.h>
 #include<netinet/in.h>
+#include<unistd.h>
+#include<stdio.h>
+#include<sys/event.h>
+#include<sys/time.h>
+
+
 
 #define MAX_CONNECT 10
 
@@ -31,5 +37,48 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    
+    fd_set active, ready;
+    FD_ZERO(&active);
+    FD_SET(STDIN_FILENO, &active);
+    FD_SET(client_fd, &active);
+
+    int max_fd = client_fd;
+    std::cout << "about to enter loop" << std::endl;
+    while(1)
+    {
+        ready = active;
+        if (select(max_fd + 1, &ready, NULL, NULL, NULL) < 0)
+        {
+            perror("select");
+            exit(EXIT_FAILURE);
+        } 
+
+        for(int i = 0; i <= max_fd; i++)
+        {
+            if (FD_ISSET(i, &ready))
+            {
+                std::cout << "fd " << i << " ready" << std::endl;
+                if (i == client_fd)
+                {
+                    int new_fd = accept(client_fd, 0, 0);
+                    if (new_fd > max_fd) max_fd = new_fd;
+                    FD_SET(new_fd, &active);
+                    std::cout << "new connection added\n";
+                }
+                else
+                {
+                    char buf[20];
+                    ssize_t n = read(i, buf, 20);
+                    if (n > 0)
+                    {
+                        write(STDOUT_FILENO, buf, n);
+                    } else
+                    {
+                        close(i);
+                        FD_CLR(i, &active);
+                    }
+                }
+            }   
+        }
+    }
 }
