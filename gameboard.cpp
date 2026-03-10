@@ -37,7 +37,7 @@ int SetServer(struct sockaddr_in& serv_addr)
     return client_fd;
 }
 
-const int maxConnections = 2; //Temporarily 2 for testing purposes
+const int maxConnections = 1; //Temporarily 2 for testing purposes
 
 int main(void)
 {
@@ -108,14 +108,8 @@ int main(void)
         }
     }
 
-    Gameboard gameboard(2);
-
-    try {
-        gameboard.game(activePlayers);
-    } catch(std::out_of_range e)
-    {
-        std::cout << e.what() << std::endl;
-    }
-    
+    Gameboard gameboard(1);
+    gameboard.game(activePlayers);
+    gameboard.viewHand(STDIN_FILENO);
     return EXIT_SUCCESS;
 }
