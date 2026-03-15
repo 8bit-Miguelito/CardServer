@@ -10,6 +10,8 @@
 
 #include "gameboard.hpp"
 
+const int maxConnections = 2; //Temporarily 2 for testing purposes
+
 int SetServer(struct sockaddr_in& serv_addr)
 {
     serv_addr.sin_family = AF_INET; //Set protocol to IP
@@ -28,7 +30,7 @@ int SetServer(struct sockaddr_in& serv_addr)
         exit(EXIT_FAILURE);
     }
 
-    if (listen(client_fd, 10) == -1) //Allow socket to listen for incoming connections
+    if (listen(client_fd, 4) == -1) //Allow socket to listen for incoming connections
     {
         perror("listen");
         exit(EXIT_FAILURE);
@@ -37,21 +39,9 @@ int SetServer(struct sockaddr_in& serv_addr)
     return client_fd;
 }
 
-const int maxConnections = 2; //Temporarily 2 for testing purposes
-
-int main(void)
+void GatherPlayers(fd_set& active, fd_set& ready, 
+    set<int>& activePlayers, const int& client_fd)
 {
-    //Tree to hold current players file descriptors
-    std::set<int> activePlayers;
-    //Add the first player aka the host
-    activePlayers.emplace(STDIN_FILENO);
-
-    //struct for socket address and info
-    struct sockaddr_in serv_addr;
-    int client_fd = SetServer(serv_addr);
-    
-    //Create two fd_sets for event-driven concurrency
-    fd_set active, ready; //Active stores all available connection, ready will modified by select function
     FD_SET(STDIN_FILENO, &active);//Add STDIN_FILENO since host will also be a player 
     FD_SET(client_fd, &active); //Add client_fd to check for incoming connections
     int max_fd = client_fd; 
@@ -107,15 +97,32 @@ int main(void)
             }
         }
     }
+}
+
+int main(void)
+{
+    //Tree to hold current players file descriptors
+    std::set<int> activePlayers;
+    //Add the first player aka the host
+    activePlayers.emplace(STDIN_FILENO);
+
+    //struct for socket address and info
+    struct sockaddr_in serv_addr;
+    int client_fd = SetServer(serv_addr);
+    
+    //Create two fd_sets for event-driven concurrency
+    fd_set active, ready; //Active stores all available connection, ready will be modified by select function
+    FD_SET(STDIN_FILENO, &active);//Add STDIN_FILENO since host will also be a player 
+    FD_SET(client_fd, &active); //Add client_fd to check for incoming connections
+    GatherPlayers(active, ready, activePlayers, client_fd);
 
     Blackjack game(activePlayers);
-    game.deal();
-    for (auto player : activePlayers)
+    game.play(activePlayers);
+    
+    while(1)
     {
-        game.viewHand(player);
+        
     }
-
-
 
     return EXIT_SUCCESS;
 }
